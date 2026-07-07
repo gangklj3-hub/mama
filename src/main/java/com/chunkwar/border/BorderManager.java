@@ -1,22 +1,22 @@
 package com.chunkwar.border;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 
 /**
- * 자기장(플레이 구역 축소) 관리.
+ * 자기장(플레이 구역 축소) 관리. 모든 크기는 "블록" 단위입니다.
  * 0단계: 초기 상태(멈춰있음), 1~3단계: 각각 지정된 시각에 구역이 줄어들고 고정 피해를 줍니다.
  */
 public class BorderManager {
 
     private final World world;
-    private final int centerChunkX;
-    private final int centerChunkZ;
+    private final int centerX;
+    private final int centerZ;
 
-    private int currentSizeChunks;          // 현재 한 변 길이(청크)
+    private int currentSizeBlocks;          // 현재 한 변 길이(블록)
     private int stage = 0;                  // 0=정지, 1~3=단계
 
     private final int stage1Time, stage2Time, stage3Time;
@@ -25,25 +25,25 @@ public class BorderManager {
 
     public BorderManager(World world, FileConfiguration config) {
         this.world = world;
-        this.centerChunkX = config.getInt("border-center-chunk-x", 0);
-        this.centerChunkZ = config.getInt("border-center-chunk-z", 0);
-        this.currentSizeChunks = config.getInt("initial-border-size-chunks", 500);
+        this.centerX = config.getInt("border-center-x", 0);
+        this.centerZ = config.getInt("border-center-z", 0);
+        this.currentSizeBlocks = config.getInt("initial-border-size-blocks", 1500);
 
         this.stage1Time = config.getInt("border-stage-1.time-seconds", 1500);
-        this.stage1Shrink = config.getInt("border-stage-1.shrink-chunks", 50);
+        this.stage1Shrink = config.getInt("border-stage-1.shrink-blocks", 150);
         this.stage1Damage = config.getDouble("border-stage-1.damage", 3.0);
 
         this.stage2Time = config.getInt("border-stage-2.time-seconds", 2100);
-        this.stage2Shrink = config.getInt("border-stage-2.shrink-chunks", 250);
+        this.stage2Shrink = config.getInt("border-stage-2.shrink-blocks", 750);
         this.stage2Damage = config.getDouble("border-stage-2.damage", 4.0);
 
         this.stage3Time = config.getInt("border-stage-3.time-seconds", 3000);
-        this.stage3Shrink = config.getInt("border-stage-3.shrink-chunks", 100);
+        this.stage3Shrink = config.getInt("border-stage-3.shrink-blocks", 300);
         this.stage3Damage = config.getDouble("border-stage-3.damage", 8.0);
     }
 
-    public void reset(int initialSizeChunks) {
-        this.currentSizeChunks = initialSizeChunks;
+    public void reset(int initialSizeBlocks) {
+        this.currentSizeBlocks = initialSizeBlocks;
         this.stage = 0;
     }
 
@@ -51,16 +51,16 @@ public class BorderManager {
         return stage;
     }
 
-    public int getInitialCenterChunkX() {
-        return centerChunkX;
+    public int getInitialCenterX() {
+        return centerX;
     }
 
-    public int getInitialCenterChunkZ() {
-        return centerChunkZ;
+    public int getInitialCenterZ() {
+        return centerZ;
     }
 
-    public int getCurrentSizeChunks() {
-        return currentSizeChunks;
+    public int getCurrentSizeBlocks() {
+        return currentSizeBlocks;
     }
 
     /**
@@ -70,18 +70,18 @@ public class BorderManager {
     public String tick(int elapsedSeconds) {
         if (stage < 1 && elapsedSeconds >= stage1Time) {
             stage = 1;
-            currentSizeChunks -= stage1Shrink;
-            return "§c[자기장] 1단계가 시작되었습니다! 구역이 " + stage1Shrink + "청크 줄어듭니다. (피해: " + stage1Damage + ")";
+            currentSizeBlocks -= stage1Shrink;
+            return "§c[자기장] 1단계가 시작되었습니다! 구역이 " + stage1Shrink + "블록 줄어듭니다. (피해: " + stage1Damage + ")";
         }
         if (stage < 2 && elapsedSeconds >= stage2Time) {
             stage = 2;
-            currentSizeChunks -= stage2Shrink;
-            return "§c[자기장] 2단계가 시작되었습니다! 구역이 " + stage2Shrink + "청크 줄어듭니다. (피해: " + stage2Damage + ")";
+            currentSizeBlocks -= stage2Shrink;
+            return "§c[자기장] 2단계가 시작되었습니다! 구역이 " + stage2Shrink + "블록 줄어듭니다. (피해: " + stage2Damage + ")";
         }
         if (stage < 3 && elapsedSeconds >= stage3Time) {
             stage = 3;
-            currentSizeChunks -= stage3Shrink;
-            return "§c[자기장] 3단계가 시작되었습니다! 구역이 " + stage3Shrink + "청크 줄어듭니다. (피해: " + stage3Damage + ")";
+            currentSizeBlocks -= stage3Shrink;
+            return "§c[자기장] 3단계가 시작되었습니다! 구역이 " + stage3Shrink + "블록 줄어듭니다. (피해: " + stage3Damage + ")";
         }
         return null;
     }
@@ -107,13 +107,13 @@ public class BorderManager {
         if (stage == 0) return false; // 아직 축소 시작 전에는 판정하지 않음
         if (!player.getWorld().equals(world)) return false;
 
-        int half = currentSizeChunks / 2;
-        Chunk chunk = player.getLocation().getChunk();
-        int cx = chunk.getX();
-        int cz = chunk.getZ();
+        int half = currentSizeBlocks / 2;
+        Location loc = player.getLocation();
+        double x = loc.getX();
+        double z = loc.getZ();
 
-        return cx < centerChunkX - half || cx > centerChunkX + half
-                || cz < centerChunkZ - half || cz > centerChunkZ + half;
+        return x < centerX - half || x > centerX + half
+                || z < centerZ - half || z > centerZ + half;
     }
 
     /**

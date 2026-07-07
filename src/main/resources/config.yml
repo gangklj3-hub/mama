@@ -5,18 +5,16 @@
 # 게임이 진행될 월드 이름 (기본 월드면 보통 "world")
 world-name: "world"
 
-# 맵 중심 청크 좌표 (보통 스폰 지점 근처인 0,0)
-border-center-chunk-x: 0
-border-center-chunk-z: 0
+# 맵 중심 블록 좌표 (보통 스폰 지점 근처인 0,0)
+border-center-x: 0
+border-center-z: 0
 
-# 초기 플레이 구역 크기 (청크 단위, 정사각형 한 변의 길이)
-# 500이면 500x500 청크 영역 안에서 랜덤 텔레포트됩니다.
-# 요청에 따라 렉이 발생해도 이 값 그대로 사용합니다. 줄이고 싶다면 이 값만 낮추면 됩니다.
-initial-border-size-chunks: 500
+# 초기 플레이 구역 크기 (블록 단위, 정사각형 한 변의 길이)
+# 1500이면 1500x1500 블록 영역 안에서 랜덤 텔레포트됩니다. (10인 기준 적당한 크기)
+initial-border-size-blocks: 1500
 
-# /게임시작 실행 시 위 500x500 청크 범위를 백그라운드에서 전부 강제 로드(미생성 지역은 생성)합니다.
-# 범위가 넓어(최대 25만 청크) 렉이 발생할 수 있지만, 매 틱 일정량씩 나눠 처리하여 서버가
-# 완전히 멈추지는 않습니다. 끄고 싶으면 false로 변경하세요.
+# /gamestart 실행 시 위 범위를 백그라운드에서 전부 강제 로드(미생성 지역은 생성)합니다.
+# 1500x1500 블록 기준 약 8,800개 청크 정도라 25만개였던 예전보다 훨씬 가볍습니다.
 pregen-on-start: true
 
 # 사전생성 시 매 틱(1/20초)마다 처리할 청크 개수. 높일수록 빨리 끝나지만 렉이 더 심해집니다.
@@ -27,21 +25,22 @@ peace-time-seconds: 1200
 
 # ---- 자기장(축소 구역) 단계별 설정 ----
 # 시간(time-seconds)은 "게임시작 시점"으로부터 경과된 초입니다.
-# shrink-chunks 는 그 단계에서 한 변 기준으로 줄어드는 청크 수입니다.
+# shrink-blocks 는 그 단계에서 한 변 기준으로 줄어드는 블록 수입니다.
+# (1500블록 기준 비율: 1단계 10%, 2단계 50%, 3단계 20% 축소 → 최종 20%(300블록) 남음)
 # damage 는 매 tick(border-damage-interval-seconds)마다 들어가는 고정 피해량(HP, 1칸=0.5)
 border-stage-1:
   time-seconds: 1500   # 25분
-  shrink-chunks: 50
+  shrink-blocks: 150
   damage: 3.0
 
 border-stage-2:
   time-seconds: 2100   # 35분
-  shrink-chunks: 250
+  shrink-blocks: 750
   damage: 4.0
 
 border-stage-3:
   time-seconds: 3000   # 50분
-  shrink-chunks: 100
+  shrink-blocks: 300
   damage: 8.0
 
 # 자기장 밖에 있을 때 몇 초마다 피해를 받는지

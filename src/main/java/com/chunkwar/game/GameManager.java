@@ -44,7 +44,9 @@ public class GameManager {
 
     private boolean gameRunning = false;
     private int elapsedSeconds = 0;
+    private long gameStartMillis = 0L;
     private int peaceTimeSeconds;
+    private boolean peaceEndAnnounced = false;
     private BossBar bossBar;
     private BukkitTask tickTask;
 
@@ -88,9 +90,11 @@ public class GameManager {
 
         gameRunning = true;
         elapsedSeconds = 0;
+        gameStartMillis = System.currentTimeMillis();
+        peaceEndAnnounced = false;
         peaceTimeSeconds = config.getInt("peace-time-seconds", 1200);
 
-        int initialSize = config.getInt("initial-border-size-chunks", 500);
+        int initialSize = config.getInt("initial-border-size-blocks", 1500);
         borderManager.reset(initialSize);
 
         participants.clear();
@@ -99,9 +103,9 @@ public class GameManager {
 
         bossBar = Bukkit.createBossBar("§b평화유지시간 준비중...", BarColor.BLUE, BarStyle.SOLID);
 
-        int centerX = borderManager.getInitialCenterChunkX();
-        int centerZ = borderManager.getInitialCenterChunkZ();
-        int halfSize = borderManager.getCurrentSizeChunks() / 2;
+        int centerX = borderManager.getInitialCenterX();
+        int centerZ = borderManager.getInitialCenterZ();
+        int halfSize = borderManager.getCurrentSizeBlocks() / 2;
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             Location loc = randomSafeLocation(world, centerX, centerZ, halfSize);
@@ -116,15 +120,19 @@ public class GameManager {
             participants.add(player.getUniqueId());
         }
 
-        // 500x500(설정값) 청크 전체를 백그라운드에서 강제 생성합니다. 렉이 나더라도 계속 진행됩니다.
+        // 플레이 구역(블록 기준) 전체를 백그라운드에서 강제 생성합니다. 렉이 나더라도 계속 진행됩니다.
         if (config.getBoolean("pregen-on-start", true)) {
-            preGenerator.start(world, centerX, centerZ, initialSize);
+            int minChunkX = Math.floorDiv(centerX - halfSize, 16);
+            int maxChunkX = Math.floorDiv(centerX + halfSize, 16);
+            int minChunkZ = Math.floorDiv(centerZ - halfSize, 16);
+            int maxChunkZ = Math.floorDiv(centerZ + halfSize, 16);
+            preGenerator.start(world, minChunkX, maxChunkX, minChunkZ, maxChunkZ);
         }
 
         int damageIntervalTicks = Math.max(1, config.getInt("border-damage-interval-seconds", 1)) * 20;
 
         tickTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            elapsedSeconds++;
+            elapsedSeconds = (int) ((System.currentTimeMillis() - gameStartMillis) / 1000L);
             tick(damageIntervalTicks);
         }, 20L, 20L);
 
@@ -140,7 +148,8 @@ public class GameManager {
             bossBar.setProgress(Math.max(0.0, (double) remain / (double) peaceTimeSeconds));
             bossBar.setColor(BarColor.BLUE);
             bossBar.setTitle("§b평화유지시간 " + time + "  §7|  §f" + borderManager.getStatusText());
-        } else if (elapsedSeconds == peaceTimeSeconds) {
+        } else if (!peaceEndAnnounced) {
+            peaceEndAnnounced = true;
             Bukkit.broadcastMessage("§c평화유지시간이 종료되었습니다! 이제부터 전투가 가능합니다.");
         }
 
@@ -179,18 +188,16 @@ public class GameManager {
     }
 
     /**
-     * 지정된 중심 청크를 기준으로 (halfSize*2+1) x (halfSize*2+1) 청크 범위 내에서
+     * 지정된 중심 블록 좌표를 기준으로 (halfSize*2+1) x (halfSize*2+1) 블록 범위 내에서
      * 안전한(발밑에 블록이 있는) 랜덤 위치를 찾습니다.
      */
-    private Location randomSafeLocation(World world, int centerChunkX, int centerChunkZ, int halfSize) {
+    private Location randomSafeLocation(World world, int centerX, int centerZ, int halfSize) {
         Random random = new Random();
         for (int attempt = 0; attempt < 30; attempt++) {
-            int chunkX = centerChunkX + random.nextInt(halfSize * 2 + 1) - halfSize;
-            int chunkZ = centerChunkZ + random.nextInt(halfSize * 2 + 1) - halfSize;
-            int blockX = chunkX * 16 + random.nextInt(16);
-            int blockZ = chunkZ * 16 + random.nextInt(16);
+            int blockX = centerX + random.nextInt(halfSize * 2 + 1) - halfSize;
+            int blockZ = centerZ + random.nextInt(halfSize * 2 + 1) - halfSize;
 
-            world.getChunkAt(chunkX, chunkZ).load();
+            world.getChunkAt(blockX >> 4, blockZ >> 4).load();
             int y = world.getHighestBlockYAt(blockX, blockZ);
 
             if (y > world.getMinHeight() + 1) {

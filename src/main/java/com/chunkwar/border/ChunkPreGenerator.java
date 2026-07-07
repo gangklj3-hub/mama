@@ -28,14 +28,13 @@ public class ChunkPreGenerator {
         this.chunksPerTick = Math.max(1, chunksPerTick);
     }
 
-    /** 이미 진행중인 사전생성이 있으면 중단하고 새로 시작합니다. */
-    public void start(World world, int centerChunkX, int centerChunkZ, int sizeChunks) {
+    /** 이미 진행중인 사전생성이 있으면 중단하고 새로 시작합니다. 청크 좌표 범위(포함)를 직접 지정합니다. */
+    public void start(World world, int minChunkX, int maxChunkX, int minChunkZ, int maxChunkZ) {
         stop();
 
-        int half = sizeChunks / 2;
         queue = new ArrayDeque<>();
-        for (int x = centerChunkX - half; x <= centerChunkX + half; x++) {
-            for (int z = centerChunkZ - half; z <= centerChunkZ + half; z++) {
+        for (int x = minChunkX; x <= maxChunkX; x++) {
+            for (int z = minChunkZ; z <= maxChunkZ; z++) {
                 queue.add(new long[]{x, z});
             }
         }
