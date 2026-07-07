@@ -1,0 +1,25 @@
+name: ChunkWar
+version: '1.0.0'
+main: com.chunkwar.ChunkWarPlugin
+api-version: '26.1.2'
+author: ChunkWarDev
+description: 청크전쟁 - 배틀로얄 스타일 미니게임 플러그인 (게임시작 / 팀 / 자기장)
+
+commands:
+  gamestart:
+    description: 청크전쟁 게임을 시작합니다.
+    usage: /gamestart
+    permission: chunkwar.admin
+  team:
+    description: 팀 생성/초대/수락/거절 등 팀 관련 명령어 모음
+    usage: |
+      /team create <팀이름>
+      /team invite <닉네임>
+      /team accept <초대자닉네임>
+      /team deny <초대자닉네임>
+      /team setleader <닉네임>  (관리자 전용)
+
+permissions:
+  chunkwar.admin:
+    description: 청크전쟁 관리 명령어(게임시작, 팀장임명) 사용 권한
+    default: op

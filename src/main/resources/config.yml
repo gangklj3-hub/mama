@@ -1,0 +1,52 @@
+# ==========================================
+# ChunkWar 설정 파일
+# ==========================================
+
+# 게임이 진행될 월드 이름 (기본 월드면 보통 "world")
+world-name: "world"
+
+# 맵 중심 청크 좌표 (보통 스폰 지점 근처인 0,0)
+border-center-chunk-x: 0
+border-center-chunk-z: 0
+
+# 초기 플레이 구역 크기 (청크 단위, 정사각형 한 변의 길이)
+# 500이면 500x500 청크 영역 안에서 랜덤 텔레포트됩니다.
+# 요청에 따라 렉이 발생해도 이 값 그대로 사용합니다. 줄이고 싶다면 이 값만 낮추면 됩니다.
+initial-border-size-chunks: 500
+
+# /게임시작 실행 시 위 500x500 청크 범위를 백그라운드에서 전부 강제 로드(미생성 지역은 생성)합니다.
+# 범위가 넓어(최대 25만 청크) 렉이 발생할 수 있지만, 매 틱 일정량씩 나눠 처리하여 서버가
+# 완전히 멈추지는 않습니다. 끄고 싶으면 false로 변경하세요.
+pregen-on-start: true
+
+# 사전생성 시 매 틱(1/20초)마다 처리할 청크 개수. 높일수록 빨리 끝나지만 렉이 더 심해집니다.
+pregen-chunks-per-tick: 20
+
+# 평화유지시간 (초 단위). 기본 20분 = 1200초
+peace-time-seconds: 1200
+
+# ---- 자기장(축소 구역) 단계별 설정 ----
+# 시간(time-seconds)은 "게임시작 시점"으로부터 경과된 초입니다.
+# shrink-chunks 는 그 단계에서 한 변 기준으로 줄어드는 청크 수입니다.
+# damage 는 매 tick(border-damage-interval-seconds)마다 들어가는 고정 피해량(HP, 1칸=0.5)
+border-stage-1:
+  time-seconds: 1500   # 25분
+  shrink-chunks: 50
+  damage: 3.0
+
+border-stage-2:
+  time-seconds: 2100   # 35분
+  shrink-chunks: 250
+  damage: 4.0
+
+border-stage-3:
+  time-seconds: 3000   # 50분
+  shrink-chunks: 100
+  damage: 8.0
+
+# 자기장 밖에 있을 때 몇 초마다 피해를 받는지
+border-damage-interval-seconds: 1
+
+# ---- 팀 관련 설정 ----
+# 초대를 거절하면 같은 초대자가 재초대할 수 없는 시간(초). 기본 5분
+invite-reject-cooldown-seconds: 300
