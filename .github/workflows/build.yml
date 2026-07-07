@@ -1,0 +1,42 @@
+name: Build ChunkWar Plugin
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Java 25 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: git 사용자 설정 (BuildTools가 필요로 함)
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: BuildTools 다운로드
+        run: |
+          mkdir -p buildtools
+          curl -s -o buildtools/BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+
+      - name: Spigot 26.1.2 BuildTools 실행
+        working-directory: buildtools
+        run: java -jar BuildTools.jar --rev 26.1.2
+
+      - name: 플러그인 빌드 (mvn package)
+        run: mvn -B clean package
+
+      - name: 빌드 결과물(jar) 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChunkWar-plugin
+          path: target/ChunkWar.jar
